@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}Doctor Dashboard{% endblock %}
+{% block header %}Doctor Dashboard{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6 mb-4">
+        <div class="card text-white bg-primary dashboard-card">
+            <div class="card-body">
+                <h5 class="card-title">Today's Appointments</h5>
+                <p class="card-text display-6">{{ today_appointments }}</p>
+                <a href="{{ url_for('appointments') }}" class="text-white">View Appointments</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 mb-4">
+        <div class="card text-white bg-success dashboard-card">
+            <div class="card-body">
+                <h5 class="card-title">Total Patients</h5>
+                <p class="card-text display-6">{{ total_patients }}</p>
+                <a href="{{ url_for('patients') }}" class="text-white">View Patients</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5>Today's Schedule</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Patient</th>
+                            <th>Reason</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Sample data -->
+                        <tr>
+                            <td>10:00 AM</td>
+                            <td>John Doe</td>
+                            <td>Follow-up</td>
+                            <td><span class="badge bg-success">Scheduled</span></td>
+                            <td>
+                                <a href="#" class="btn btn-sm btn-outline-primary">View</a>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>11:30 AM</td>
+                            <td>Jane Smith</td>
+                            <td>Consultation</td>
+                            <td><span class="badge bg-success">Scheduled</span></td>
+                            <td>
+                                <a href="#" class="btn btn-sm btn-outline-primary">View</a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

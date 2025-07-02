@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}Appointments{% endblock %}
+
+{% block content %}
+<div class="card shadow">
+    <div class="card-header bg-white">
+        <h5 class="mb-0">
+            <i class="bi bi-calendar-check"></i> 
+            {% if session.is_doctor %}My Appointments{% else %}Appointments{% endif %}
+        </h5>
+    </div>
+    <div class="card-body">
+        {% if appointments %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Time</th>
+                            {% if not session.is_doctor %}<th>Doctor</th>{% endif %}
+                            {% if not session.is_admin and not session.is_doctor %}<th>Specialization</th>{% endif %}
+                            {% if session.is_doctor or session.is_admin %}<th>Patient</th>{% endif %}
+                            <th>Reason</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for appt in appointments %}
+                        <tr>
+                            <td>{{ appt.appointment_date.strftime('%Y-%m-%d') }}</td>
+                            <td>{{ appt.start_time.strftime('%H:%M') }}</td>
+                            {% if not session.is_doctor %}
+                                <td>
+                                    {% if appt.doctor_name %}
+                                        {{ appt.doctor_name }}
+                                    {% else %}
+                                        Dr. Unknown
+                                    {% endif %}
+                                </td>
+                            {% endif %}
+                            {% if not session.is_admin and not session.is_doctor %}
+                                <td>{{ appt.specialization or 'N/A' }}</td>
+                            {% endif %}
+                            {% if session.is_doctor or session.is_admin %}
+                                <td>{{ appt.patient_name }}</td>
+                            {% endif %}
+                            <td>{{ appt.reason or 'Not specified' }}</td>
+                            <td>
+                                <span class="badge 
+                                    {% if appt.status == 'Confirmed' %}bg-success
+                                    {% elif appt.status == 'Pending' %}bg-warning text-dark
+                                    {% elif appt.status == 'Cancelled' %}bg-secondary
+                                    {% else %}bg-primary{% endif %}">
+                                    {{ appt.status }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="#" class="btn btn-outline-primary">
+                                        <i class="bi bi-eye"></i> View
+                                    </a>
+                                    {% if session.is_doctor and appt.status == 'Confirmed' %}
+                                        <a href="{{ url_for('complete_appointment', appointment_id=appt.appointment_id) }}" 
+                                           class="btn btn-outline-success">
+                                            <i class="bi bi-check-circle"></i> Complete
+                                        </a>
+                                    {% endif %}
+                                    {% if appt.status in ['Pending', 'Confirmed'] %}
+                                        <a href="{{ url_for('cancel_appointment', appointment_id=appt.appointment_id) }}" 
+                                           class="btn btn-outline-danger"
+                                           onclick="return confirm('Are you sure you want to cancel this appointment?')">
+                                            <i class="bi bi-x-circle"></i> Cancel
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="alert alert-info">
+                No appointments found.
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to HTML and CSS</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        
+        .welcome-banner {
+            text-align: center;
+            font-size: 2.5em;
+            margin: 20px 0 30px;
+            padding: 20px;
+            background-color: #86909c;
+            color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            animation: fadeIn 1s;
+        }
+        
+        .paragraph-part {
+            margin-bottom: 20px;
+            text-align: justify;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            border-left: 4px solid #040b12;
+        }
+        
+        .running-text-container {
+            margin-top: 30px;
+            padding: 12px;
+            background-color: #343a40;
+            border-radius: 8px;
+        }
+        
+        marquee {
+            color: white;
+            font-size: 1.1em;
+            padding: 8px 0;
+        }
+        
+        .abbreviation {
+            font-weight: bold;
+            color: #17a2b8;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="welcome-banner">WELCOME TO HTML AND CSS</div>
+    
+    <div class="paragraph-part">
+        This is a full paragraph with proper spacing. HTML and CSS are used to style the text for better readability. 
+        The paragraph has margin and padding to create space around it.
+    </div>
+    
+    <div class="paragraph-part">
+        The line height is increased to 1.6 for better readability, and the text is justified for a clean look. 
+        You can add as much text as you want here, and it will wrap naturally within the container.
+    </div>
+    
+    <div class="paragraph-part">
+        This example ensures that the paragraph looks neat and well-structured.
+    </div>
+    
+    <div class="running-text-container">
+        <marquee behavior="scroll" direction="left" scrollamount="5">
+            <span class="abbreviation">HTML</span> = HyperText Markup Language • 
+            <span class="abbreviation">CSS</span> = Cascading Style Sheets
+        </marquee>
+    </div>
+</body>
+</html>
