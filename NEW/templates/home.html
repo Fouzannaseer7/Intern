@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>HOPE</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f8f9fa;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 20px 0;
+            text-align: center;
+        }
+        h1 {
+            margin: 0;
+            font-size: 2.5em;
+        }
+        .welcome-message {
+            text-align: center;
+            margin: 30px 0;
+            font-size: 1.2em;
+        }
+        .auth-buttons {
+            text-align: center;
+            margin: 30px 0;
+        }
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            margin: 0 10px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        .btn-login {
+            background-color: #3498db;
+            color: white;
+        }
+        .btn-register {
+            background-color: #2ecc71;
+            color: white;
+        }
+        .btn:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+        .features {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            margin: 50px 0;
+        }
+        .feature {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.1);
+            width: 30%;
+            min-width: 250px;
+            margin: 10px;
+            text-align: center;
+        }
+        .feature-icon {
+            font-size: 2.5em;
+            color: #3498db;
+            margin-bottom: 15px;
+        }
+        footer {
+            background-color: #34495e;
+            color: white;
+            text-align: center;
+            padding: 20px 0;
+            margin-top: 50px;
+        }
+        .alert {
+            padding: 15px;
+            margin: 20px auto;
+            max-width: 600px;
+            border-radius: 4px;
+        }
+        .alert-info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .user-dashboard {
+            text-align: center;
+            margin-top: 30px;
+        }
+        .dashboard-btn {
+            display: inline-block;
+            padding: 12px 24px;
+            margin: 10px;
+            background-color: #3498db;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            transition: all 0.3s;
+        }
+        .dashboard-btn:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>Hospital Management System</h1>
+        </div>
+    </header>
+
+    <div class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% if 'user_id' not in session %}
+            <div class="welcome-message">
+                <h2>Welcome to Our Hospital Management System</h2>
+                <p>Please login or register to access our services</p>
+            </div>
+
+            <div class="auth-buttons">
+                <a href="{{ url_for('login') }}" class="btn btn-login">Login</a>
+                <a href="{{ url_for('register') }}" class="btn btn-register">Register</a>
+            </div>
+
+            <div class="features">
+                <div class="feature">
+                    <div class="feature-icon">🏥</div>
+                    <h3>Book Appointments</h3>
+                    <p>Schedule appointments with our specialist doctors at your convenience</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">👨‍⚕️</div>
+                    <h3>Expert Doctors</h3>
+                    <p>Access to highly qualified medical professionals</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">📱</div>
+                    <h3>24/7 Access</h3>
+                    <p>Manage your health records anytime, anywhere</p>
+                </div>
+            </div>
+        {% else %}
+            <div class="user-dashboard">
+                <h2>Welcome back, {{ session['username'] }}!</h2>
+                <p>You are logged in as {{ session['user_type'] }}</p>
+                
+                {% if session['user_type'] == 'patient' %}
+                    <a href="{{ url_for('patient_dashboard') }}" class="dashboard-btn">Go to Patient Dashboard</a>
+                {% elif session['user_type'] == 'doctor' %}
+                    <a href="{{ url_for('doctor_dashboard') }}" class="dashboard-btn">Go to Doctor Dashboard</a>
+                {% elif session['user_type'] == 'admin' %}
+                    <a href="{{ url_for('admin_dashboard') }}" class="dashboard-btn">Go to Admin Dashboard</a>
+                {% endif %}
+                
+                <a href="{{ url_for('logout') }}" class="dashboard-btn">Logout</a>
+            </div>
+        {% endif %}
+    </div>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2023 Hospital Management System. All rights reserved.</p>
+        </div>
+    </footer>
+</body>
+</html>

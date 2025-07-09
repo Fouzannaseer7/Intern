@@ -1,0 +1,158 @@
+{% extends "base_patient.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Welcome Header -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Patient Dashboard</h1>
+        <a href="{{ url_for('book_appointment') }}" class="btn btn-primary btn-icon-split">
+            <span class="icon text-white-50">
+                <i class="fas fa-calendar-plus"></i>
+            </span>
+            <span class="text">Book Appointment</span>
+        </a>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row">
+        <!-- Upcoming Appointments -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Upcoming Appointments</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ upcoming_count or 0 }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-calendar-check fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Completed Appointments -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Completed Appointments</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ completed_count or 0 }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Medical Records -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Medical Records</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ records_count or 0 }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-file-medical fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Prescriptions -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Active Prescriptions</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ prescriptions_count or 0 }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-prescription-bottle-alt fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Appointments Table -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Upcoming Appointments</h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered" id="appointmentsTable" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Time</th>
+                            <th>Doctor</th>
+                            <th>Department</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for appt in appointments %}
+                        <tr>
+                            <td>{{ appt.appointment_date.strftime('%Y-%m-%d') if appt.appointment_date }}</td>
+                            <td>
+                                {% if appt.appointment_time %}
+                                    {% set total_seconds = appt.appointment_time.total_seconds() %}
+                                    {% set hours = (total_seconds // 3600) | int %}
+                                    {% set minutes = ((total_seconds % 3600) // 60) | int %}
+                                    {{ "%02d:%02d" | format(hours, minutes) }}
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </td>
+                            <td>Dr. {{ appt.doctor_first_name }} {{ appt.doctor_last_name }}</td>
+                            <td>{{ appt.department_name }}</td>
+<td>
+  {% if appt.status == 'Completed' %}
+    <span class="badge badge-success"><i class="fas fa-check-circle"></i> Completed</span>
+  {% else %}
+    <span class="badge badge-secondary"><i class="fas fa-times-circle"></i> Not Completed</span>
+  {% endif %}
+</td>
+
+
+                            <td>
+                                <a href="#" class="btn btn-info btn-circle btn-sm" title="View Details">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                {% if appt.status == 'Scheduled' %}
+                                <a href="{{ url_for('cancel_appointment', appointment_id=appt.appointment_id) }}" 
+                                   class="btn btn-danger btn-circle btn-sm" title="Cancel"
+                                   onclick="return confirm('Are you sure you want to cancel this appointment?');">
+                                    <i class="fas fa-times"></i>
+                                </a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="6" class="text-center">No upcoming appointments found.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

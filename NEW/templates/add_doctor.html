@@ -1,0 +1,247 @@
+{% extends "admin_base.html" %}
+
+{% block title %}Add New Doctor | Hospital Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-user-plus mr-2"></i>Add New Doctor
+        </h1>
+        <a href="{{ url_for('admin_doctors') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left mr-2"></i>Back to Doctors
+        </a>
+    </div>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show">
+                    {{ message }}
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 bg-primary text-white">
+            <h6 class="m-0 font-weight-bold">
+                <i class="fas fa-user-md mr-2"></i>Doctor Information
+            </h6>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('add_doctor') }}" class="needs-validation" novalidate>
+                <div class="row">
+                    <!-- Personal Information -->
+                    <div class="col-md-6">
+                        <h5 class="text-primary mb-3">
+                            <i class="fas fa-id-card mr-2"></i>Personal Information
+                        </h5>
+                        
+                        <div class="form-group">
+                            <label for="first_name">First Name *</label>
+                            <input type="text" class="form-control" id="first_name" name="first_name" 
+                                   value="{{ form_data.first_name if form_data else '' }}" required>
+                            <div class="invalid-feedback">Please provide the doctor's first name.</div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="last_name">Last Name *</label>
+                            <input type="text" class="form-control" id="last_name" name="last_name" 
+                                   value="{{ form_data.last_name if form_data else '' }}" required>
+                            <div class="invalid-feedback">Please provide the doctor's last name.</div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="gender">Gender</label>
+                            <select class="form-control" id="gender" name="gender">
+                                <option value="Male" {% if form_data and form_data.gender == 'Male' %}selected{% endif %}>Male</option>
+                                <option value="Female" {% if form_data and form_data.gender == 'Female' %}selected{% endif %}>Female</option>
+                                <option value="Other" {% if form_data and form_data.gender == 'Other' %}selected{% endif %}>Other</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Professional Information -->
+                    <div class="col-md-6">
+                        <h5 class="text-primary mb-3">
+                            <i class="fas fa-briefcase-medical mr-2"></i>Professional Information
+                        </h5>
+                        
+                        <div class="form-group">
+                            <label for="department_id">Department *</label>
+                             <select class="form-control" id="department_id" name="department_id" required>
+        <option value="">Select Department</option>
+        <option value="1">Cardiology</option>
+        <option value="2">Neurology</option>
+        <option value="3">Pediatrics</option>
+        <option value="4">Orthopedics</option>
+        <option value="5">Dermatology</option>
+        <option value="6">Ophthalmology</option>
+        <option value="7">ENT</option>
+        <option value="8">General Surgery</option>
+        <option value="9">Internal Medicine</option>
+        <option value="10">Oncology</option>
+        <option value="11">Radiology</option>
+        <option value="12">Emergency Medicine</option>
+    </select>
+    <div class="invalid-feedback">Please select a department.</div>
+</div>
+                        
+                        <div class="form-group">
+                            <label for="specialization">Specialization *</label>
+                            <input type="text" class="form-control" id="specialization" name="specialization" 
+                                   value="{{ form_data.specialization if form_data else '' }}" required>
+                            <div class="invalid-feedback">Please provide the doctor's specialization.</div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="license_number">License Number *</label>
+                            <input type="text" class="form-control" id="license_number" name="license_number" 
+                                   value="{{ form_data.license_number if form_data else '' }}" required>
+                            <div class="invalid-feedback">Please provide a valid license number.</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mt-4">
+                    <!-- Contact Information -->
+                    <div class="col-md-6">
+                        <h5 class="text-primary mb-3">
+                            <i class="fas fa-address-book mr-2"></i>Contact Information
+                        </h5>
+                        
+                        <div class="form-group">
+                            <label for="email">Email Address *</label>
+                            <input type="email" class="form-control" id="email" name="email" 
+                                   value="{{ form_data.email if form_data else '' }}" required>
+                            <div class="invalid-feedback">Please provide a valid email address.</div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="phone">Phone Number</label>
+                            <input type="tel" class="form-control" id="phone" name="phone" 
+                                   value="{{ form_data.phone if form_data else '' }}">
+                        </div>
+                    </div>
+                    
+                    <!-- Account Information -->
+                    <div class="col-md-6">
+                        <h5 class="text-primary mb-3">
+                            <i class="fas fa-user-lock mr-2"></i>Account Information
+                        </h5>
+                        
+                        <div class="form-group">
+                            <label for="username">Username *</label>
+                            <input type="text" class="form-control" id="username" name="username" 
+                                   value="{{ form_data.username if form_data else '' }}" required minlength="4">
+                            <div class="invalid-feedback">Username must be at least 4 characters.</div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="password">Password *</label>
+                            <input type="password" class="form-control" id="password" name="password" required minlength="8">
+                            <div class="invalid-feedback">Password must be at least 8 characters.</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group mt-4">
+                    <label for="bio">Biography</label>
+                    <textarea class="form-control" id="bio" name="bio" rows="3">{{ form_data.bio if form_data else '' }}</textarea>
+                </div>
+                
+                <div class="form-group mt-4">
+                    <div class="custom-control custom-checkbox">
+                        <input type="checkbox" class="custom-control-input" id="terms" required>
+                        <label class="custom-control-label" for="terms">
+                            I confirm that all information provided is accurate *
+                        </label>
+                        <div class="invalid-feedback">You must confirm before submitting.</div>
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <div class="d-flex justify-content-end">
+                    <button type="reset" class="btn btn-secondary mr-2">
+                        <i class="fas fa-undo mr-2"></i>Reset Form
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save mr-2"></i>Save Doctor
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!-- Form Validation -->
+<script>
+// Enable form validation
+(function() {
+    'use strict';
+    window.addEventListener('load', function() {
+        var forms = document.getElementsByClassName('needs-validation');
+        Array.prototype.filter.call(forms, function(form) {
+            form.addEventListener('submit', function(event) {
+                if (form.checkValidity() === false) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            }, false);
+        });
+    }, false);
+})();
+
+// Department AJAX handling
+$(document).ready(function() {
+    $('#saveDepartment').click(function() {
+        const $btn = $(this);
+        const name = $('#departmentName').val().trim();
+        const description = $('#departmentDescription').val().trim();
+        
+        if (!name) {
+            alert('Department name is required');
+            return;
+        }
+
+        $btn.html('<i class="fas fa-spinner fa-spin mr-2"></i>Saving...');
+        $btn.prop('disabled', true);
+        
+        $.ajax({
+            url: '{{ url_for("add_department") }}',
+            method: 'POST',
+            data: { name: name, description: description },
+            success: function(response) {
+                if (response.success) {
+                    // Add to select and select it
+                    $('#department_id').append(
+                        $('<option>', {
+                            value: response.department_id,
+                            text: name,
+                            selected: true
+                        })
+                    );
+                    $('#addDepartmentModal').modal('hide');
+                    $('#newDepartmentForm')[0].reset();
+                } else {
+                    alert('Error: ' + response.message);
+                }
+            },
+            error: function() {
+                alert('Error saving department');
+            },
+            complete: function() {
+                $btn.html('<i class="fas fa-save mr-2"></i>Save Department');
+                $btn.prop('disabled', false);
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

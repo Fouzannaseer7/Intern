@@ -17,8 +17,8 @@ Session(app)
 db_config = {
     'host': 'localhost',
     'user': 'root',
-    'password': '1234',
-    'database': 'hospital_appointment_system'
+    'password': 'Founas@123',
+    'database': 'signin_db'
 }
 
 def get_db_connection():

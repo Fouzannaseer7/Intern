@@ -4,7 +4,7 @@ from tabulate import tabulate
 # Database connection configuration
 config = {
     'user': 'root',
-    'password': '1234',
+    'password': 'Founas@123',
     'host': 'localhost',
     'database': 'student_management'
 }
