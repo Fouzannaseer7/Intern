@@ -122,21 +122,24 @@
                             </td>
                             <td>Dr. {{ appt.doctor_first_name }} {{ appt.doctor_last_name }}</td>
                             <td>{{ appt.department_name }}</td>
-<td>
-  {% if appt.status == 'Completed' %}
-    <span class="badge badge-success"><i class="fas fa-check-circle"></i> Completed</span>
-  {% else %}
-    <span class="badge badge-secondary"><i class="fas fa-times-circle"></i> Not Completed</span>
-  {% endif %}
-</td>
-
-
+                           <td>
+                            {% if appt.status == 'Completed' %}
+                                <span class="badge badge-success text-black">✅ Completed</span>
+                            {% elif appt.status == 'Scheduled' %}
+                                <span class="badge badge-primary text-black">📅 Scheduled</span>
+                            {% elif appt.status == 'Cancelled' %}
+                                <span class="badge badge-danger text-black">❌ Cancelled</span>
+                            {% else %}
+                                <span class="badge badge-dark ">❓ Unknown</span>
+                            {% endif %}
+                            </td>
                             <td>
-                                <a href="#" class="btn btn-info btn-circle btn-sm" title="View Details">
+                                <a href="{{ url_for('view_appointment', appointment_id=appt.appointment_id) }}" 
+                                   class="btn btn-info btn-circle btn-sm" title="View Details">
                                     <i class="fas fa-eye"></i>
                                 </a>
                                 {% if appt.status == 'Scheduled' %}
-                                <a href="{{ url_for('cancel_appointment', appointment_id=appt.appointment_id) }}" 
+                               <a href="{{ url_for('cancel_patient_appointment', appointment_id=appt.appointment_id) }}" 
                                    class="btn btn-danger btn-circle btn-sm" title="Cancel"
                                    onclick="return confirm('Are you sure you want to cancel this appointment?');">
                                     <i class="fas fa-times"></i>

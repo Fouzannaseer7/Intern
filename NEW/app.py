@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 import mysql.connector
 from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import date,timedelta
+from datetime import date, datetime, timedelta
 import os
 from functools import wraps
 from mysql.connector import Error as DBError
@@ -18,6 +18,7 @@ db_config = {
     'password': 'Founas@123',
     'database': 'HospitalManagementSystem'
 }
+
 # ======================
 #  HELPER FUNCTIONS
 # ======================
@@ -109,15 +110,20 @@ def home():
             print("❌ Unknown user_type:", user_type)
     return render_template('home.html')
 
-
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if 'user_id' in session:
         return redirect(url_for('home'))
 
     if request.method == 'POST':
-        username = request.form.get('username', '').strip()
-        password = request.form.get('password', '').strip()
+        username = request.form['username']
+        password = request.form['password']
+
+        user = execute_query(
+            "SELECT * FROM Users WHERE username = %s AND password_hash = SHA2(%s, 256)",
+            (username, password),
+            fetch='one'
+        )
 
         if not username or not password:
             flash('Please enter both username and password', 'danger')
@@ -129,12 +135,12 @@ def login():
             fetch='one'
         )
 
-        if user and check_password_hash(user['password_hash'], password):
-            session.update({
-                'user_id': user['user_id'],
-                'username': user['username'],
-                'user_type': user['user_type']
-            })
+        
+
+        if user:
+            session['user_id'] = user['user_id']
+            session['username'] = user['username']
+            session['user_type'] = user['user_type']
 
             flash('Login successful!', 'success')
 
@@ -149,7 +155,6 @@ def login():
         flash('Invalid username or password', 'danger')
 
     return render_template('login.html')
-
 
 @app.route('/logout')
 def logout():
@@ -281,100 +286,202 @@ def register():
 @app.route('/patient/dashboard')
 @login_required(role='patient')
 def patient_dashboard():
-    """Patient dashboard with appointments"""
+    user_id = session['user_id']
+
     patient = execute_query(
-        """SELECT p.* FROM Patients p
-           JOIN Users u ON p.user_id = u.user_id
-           WHERE u.user_id = %s""",
-        (session['user_id'],),
-        fetch='one'
-    )
-    
+        "SELECT patient_id FROM Patients WHERE user_id = %s", (user_id,), fetch='one')
+
     if not patient:
-        flash('Patient record not found', 'danger')
+        flash("Patient not found", "danger")
         return redirect(url_for('logout'))
-    
-    appointments = execute_query(
-        """SELECT a.*, d.first_name AS doctor_first_name, d.last_name AS doctor_last_name,
-                  dep.name AS department_name
-           FROM Appointments a
-           JOIN Doctors d ON a.doctor_id = d.doctor_id
-           JOIN Departments dep ON d.department_id = dep.department_id
-           WHERE a.patient_id = %s
-           ORDER BY a.appointment_date, a.appointment_time""",
-        (patient['patient_id'],),
-        fetch='all'
-    )
-      # Count stats
+
+    appointments = execute_query("""
+        SELECT a.*, d.first_name AS doctor_first_name, d.last_name AS doctor_last_name,
+               dep.name AS department_name
+        FROM Appointments a
+        JOIN Doctors d ON a.doctor_id = d.doctor_id
+        JOIN Departments dep ON d.department_id = dep.department_id
+        WHERE a.patient_id = %s
+        ORDER BY a.appointment_date DESC, a.appointment_time DESC
+    """, (patient['patient_id'],), fetch='all')
+
+    # Optional counts
     upcoming_count = sum(1 for appt in appointments if appt['status'] == 'Scheduled')
     completed_count = sum(1 for appt in appointments if appt['status'] == 'Completed')
-
-    # Simulated placeholders — replace with real queries later
-    records_count = 0
     prescriptions_count = 0
-    
-    return render_template('patient_dashboard.html', 
-                         patient=patient, 
-                         appointments=appointments or [],
-                         upcoming_count=upcoming_count,
-                           completed_count=completed_count,
-                           records_count=records_count,
-                           prescriptions_count=prescriptions_count)
+    records_count = 0
 
+    return render_template('patient_dashboard.html',
+                           appointments=appointments,
+                           upcoming_count=upcoming_count,
+                           completed_count=completed_count,
+                           prescriptions_count=prescriptions_count,
+                           records_count=records_count)
+
+
+from datetime import date, datetime, timedelta, time
 
 @app.route('/appointments/book', methods=['GET', 'POST'])
 @login_required(role='patient')
 def book_appointment():
-    """Handle appointment booking"""
-    if request.method == 'POST':
-        # Process form submission
-        doctor_id = request.form.get('doctor_id')
-        date = request.form.get('date')
-        time = request.form.get('time')
-        reason = request.form.get('reason', '')
-        
-        # Get patient ID from session
-        patient = execute_query(
-            "SELECT patient_id FROM Patients WHERE user_id = %s",
-            (session['user_id'],),
-            fetch='one'
-        )
-        
+    departments = execute_query("SELECT department_id, name FROM Departments", fetch='all')
+    selected_department = request.form.get('department')
+    selected_doctor = request.form.get('doctor_id')
+    date_str = request.form.get('date')
+    time_str = request.form.get('time')
+    reason = request.form.get('reason', '')
+
+    # Fetch only doctors from selected department
+    doctors = []
+    if selected_department:
+        doctors = execute_query("""
+            SELECT d.doctor_id, d.first_name, d.last_name, dep.name AS department_name, d.department_id
+            FROM Doctors d
+            JOIN Departments dep ON d.department_id = dep.department_id
+            WHERE d.department_id = %s
+            ORDER BY d.last_name
+        """, (selected_department,), fetch='all')
+
+    # Load doctor availability and time slots
+    available_dates = []
+    time_slots = []
+    if selected_doctor:
+        schedules = execute_query("""
+            SELECT day_of_week, start_time, end_time
+            FROM DoctorSchedules
+            WHERE doctor_id = %s
+        """, (selected_doctor,), fetch='all')
+
+        today = date.today()
+        for i in range(30):  # check next 30 days
+            check_date = today + timedelta(days=i)
+            weekday = check_date.strftime('%A')
+
+            for schedule in schedules:
+                if schedule['day_of_week'] == weekday:
+                    available_dates.append(check_date.isoformat())
+
+                    # Generate available time slots (30-minute intervals)
+                    start_time = schedule['start_time']
+                    end_time = schedule['end_time']
+                    if isinstance(start_time, timedelta):
+                        start_time = (datetime.min + start_time).time()
+                    if isinstance(end_time, timedelta):
+                        end_time = (datetime.min + end_time).time()
+
+                    slot = datetime.combine(check_date, start_time)
+                    end_slot = datetime.combine(check_date, end_time)
+                    
+
+                    while slot < end_slot:
+                        time_slots.append(slot.strftime('%H:%M'))
+                        slot += timedelta(minutes=30)
+
+                    break  # matched this day, no need to check more
+
+    # Handle booking submission
+    if request.method == 'POST' and selected_doctor and date_str and time_str:
+        # Check date is allowed
+        if date_str not in available_dates:
+            flash("❌ Selected date is not in the doctor's availability.", "danger")
+            return redirect(url_for('book_appointment'))
+
+        # Check time is allowed
+        if time_str not in time_slots:
+            flash("❌ Selected time is not in the doctor's schedule.", "danger")
+            return redirect(url_for('book_appointment'))
+
+        patient = execute_query("SELECT patient_id FROM Patients WHERE user_id = %s", (session['user_id'],), fetch='one')
         if not patient:
-            flash('Patient record not found', 'danger')
+            flash("❌ Patient record not found.", "danger")
             return redirect(url_for('patient_dashboard'))
-        
-        # Insert new appointment
-        success = execute_query(
-            """INSERT INTO Appointments 
-               (patient_id, doctor_id, appointment_date, appointment_time, reason, status)
-               VALUES (%s, %s, %s, %s, %s, 'Scheduled')""",
-            (patient['patient_id'], doctor_id, date, time, reason)
-        )
-        
+
+        # Save appointment
+        success = execute_query("""
+            INSERT INTO Appointments (patient_id, doctor_id, appointment_date, appointment_time, reason, status)
+            VALUES (%s, %s, %s, %s, %s, 'Scheduled')
+        """, (patient['patient_id'], selected_doctor, date_str, time_str, reason))
+
         if success:
-            flash('Appointment booked successfully!', 'success')
+            flash("✅ Appointment booked!", "success")
             return redirect(url_for('patient_dashboard'))
         else:
-            flash('Failed to book appointment', 'danger')
-    
-    # GET request - show booking form
-    doctors = execute_query(
-        """SELECT d.doctor_id, d.first_name, d.last_name, dep.name AS department_name
-           FROM Doctors d
-           JOIN Departments dep ON d.department_id = dep.department_id
-           ORDER BY d.last_name""",
-        fetch='all'
-    )
-   
+            flash("❌ Failed to book appointment.", "danger")
 
-  
-    departments = execute_query("SELECT * FROM Departments", fetch='all')
-    
-    return render_template('book_appointment.html', 
-                       doctors=doctors or [], 
-                       departments=departments or [],
+    current_date = date.today().isoformat()
+    return render_template(
+        "book_appointment.html",
+        departments=departments,
+        doctors=doctors,
+        selected_department=selected_department,
+        selected_doctor=selected_doctor,
+        available_dates=available_dates,
+        time_slots=time_slots,
+        current_date=current_date
     )
+
+
+@app.route('/appointments/<int:appointment_id>/view')
+@login_required(role='patient')
+def view_appointment(appointment_id):
+    appointment = execute_query("""
+        SELECT a.*, d.first_name AS doctor_first_name, d.last_name AS doctor_last_name,
+               dep.name AS department_name
+        FROM Appointments a
+        JOIN Doctors d ON a.doctor_id = d.doctor_id
+        JOIN Departments dep ON d.department_id = dep.department_id
+        WHERE a.appointment_id = %s
+    """, (appointment_id,), fetch='one')
+
+    if not appointment:
+        flash('❌ Appointment not found', 'danger')
+        return redirect(url_for('patient_dashboard'))
+
+    return render_template('view_appointment.html', appointment=appointment)
+
+@app.route('/get_doctors/<int:department_id>')
+@login_required(role='patient')
+def get_doctors_by_department(department_id):
+    doctors = execute_query("""
+        SELECT doctor_id, first_name, last_name 
+        FROM Doctors 
+        WHERE department_id = %s
+        ORDER BY last_name
+    """, (department_id,), fetch='all')
+
+    return jsonify(doctors)
+
+@app.route('/appointments/<int:appointment_id>/cancel', methods=['GET'])
+@login_required(role='patient')
+def cancel_patient_appointment(appointment_id):
+    appointment = execute_query("""
+        SELECT a.*, p.user_id
+        FROM Appointments a
+        JOIN Patients p ON a.patient_id = p.patient_id
+        WHERE a.appointment_id = %s
+    """, (appointment_id,), fetch='one')
+
+    if not appointment:
+        flash('❌ Appointment not found.', 'danger')
+        return redirect(url_for('patient_dashboard'))
+
+    if appointment['user_id'] != session['user_id']:
+        flash("❌ You don't have permission to cancel this appointment.", "danger")
+        return redirect(url_for('patient_dashboard'))
+
+    success = execute_query(
+        "UPDATE Appointments SET status = 'Cancelled' WHERE appointment_id = %s",
+        (appointment_id,)
+    )
+
+    if success:
+        flash("✅ Appointment cancelled successfully.", "success")
+    else:
+        flash("❌ Failed to cancel appointment.", "danger")
+
+    return redirect(url_for('patient_dashboard'))
+
+
 
 # ======================
 #  DOCTOR ROUTES
@@ -626,6 +733,7 @@ def update_appointment(appointment_id):
             flash('Failed to update appointment', 'danger')
     
     return redirect(url_for('admin_dashboard'))
+
 
 @app.route('/admin/appointment/<int:appointment_id>/cancel', methods=['POST'])
 @login_required(role='admin')

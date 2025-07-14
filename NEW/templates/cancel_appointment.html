@@ -1,0 +1,56 @@
+{% extends "base_patient.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Cancel Appointment</h1>
+        <a href="{{ url_for('patient_dashboard') }}" class="btn btn-secondary btn-icon-split">
+            <span class="icon text-white-50"><i class="fas fa-arrow-left"></i></span>
+            <span class="text">Back to Dashboard</span>
+        </a>
+    </div>
+
+    <!-- Appointment Card -->
+    <div class="card shadow mb-4 border-left-danger">
+        <div class="card-header py-3 bg-danger text-white">
+            <h6 class="m-0 font-weight-bold">Are you sure you want to cancel this appointment?</h6>
+        </div>
+        <div class="card-body">
+            <table class="table table-bordered">
+                <tr>
+                    <th>Appointment Date</th>
+                    <td>{{ appointment.appointment_date.strftime('%Y-%m-%d') }}</td>
+                </tr>
+                <tr>
+                    <th>Time</th>
+                    <td>
+                        {{ appointment.appointment_time.strftime('%H:%M') if appointment.appointment_time }}
+                    </td>
+                </tr>
+                <tr>
+                    <th>Doctor</th>
+                    <td>Dr. {{ appointment.doctor_first_name }} {{ appointment.doctor_last_name }}</td>
+                </tr>
+                <tr>
+                    <th>Department</th>
+                    <td>{{ appointment.department_name }}</td>
+                </tr>
+                <tr>
+                    <th>Status</th>
+                    <td>
+                        <span class="badge badge-primary">{{ appointment.status }}</span>
+                    </td>
+                </tr>
+            </table>
+
+            <form method="POST">
+                <button type="submit" class="btn btn-danger">
+                    <i class="fas fa-times-circle"></i> Yes, Cancel Appointment
+                </button>
+                <a href="{{ url_for('patient_dashboard') }}" class="btn btn-secondary ml-2">No, Go Back</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

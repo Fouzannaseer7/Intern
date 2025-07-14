@@ -21,27 +21,28 @@
         <div class="card-body">
             <form method="POST" id="appointmentForm">
                 <div class="row">
+                    <!-- Department -->
                     <div class="col-md-6">
                         <div class="form-group">
                             <label for="department">Department</label>
-                            <select class="form-control" id="department" name="department">
-                                <option value="">All Departments</option>
+                            <select class="form-control" id="department" name="department" required onchange="this.form.submit()">
+                                <option value="">-- Select Department --</option>
                                 {% for dept in departments %}
-                                <option value="{{ dept.department_id }}">{{ dept.name }}</option>
+                                <option value="{{ dept.department_id }}" {% if selected_department == dept.department_id|string %}selected{% endif %}>{{ dept.name }}</option>
                                 {% endfor %}
                             </select>
                         </div>
                     </div>
+
+                    <!-- Doctor -->
                     <div class="col-md-6">
                         <div class="form-group">
                             <label for="doctor_id">Doctor</label>
-                            <select class="form-control" id="doctor_id" name="doctor_id" required>
-                                <option value="">Select Doctor</option>
+                            <select class="form-control" id="doctor_id" name="doctor_id" required onchange="this.form.submit()">
+                                <option value="">-- Select Doctor --</option>
                                 {% for doctor in doctors %}
-                                <option value="{{ doctor.doctor_id }}">
-
-                                Dr. {{ doctor.first_name }} {{ doctor.last_name }} ({{ doctor.department_name }})
-
+                                <option value="{{ doctor.doctor_id }}" {% if selected_doctor == doctor.doctor_id|string %}selected{% endif %}>
+                                    Dr. {{ doctor.first_name }} {{ doctor.last_name }} ({{ doctor.department_name }})
                                 </option>
                                 {% endfor %}
                             </select>
@@ -49,30 +50,36 @@
                     </div>
                 </div>
 
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label for="date">Appointment Date</label>
-                            <input type="date" class="form-control" id="date" name="date" required 
-                                   min="{{ min_date }}" max="{{ max_date }}">
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            
-                            <label for="time">Select Time:</label>
-                            <input type="time" name="time" required>
+                <!-- Date Field -->
+<div class="form-group">
+    <label for="date">Appointment Date</label>
+    <select name="date" class="form-control" required>
+        <option value="">-- Select Date --</option>
+        {% for date in available_dates %}
+        <option value="{{ date }}" {% if date == request.form.date %}selected{% endif %}>{{ date }}</option>
+        {% endfor %}
+    </select>
+</div>
 
-                        </div>
-                    </div>
-                </div>
+<!-- Time Field -->
+<div class="form-group">
+    <label for="time">Appointment Time</label>
+    <select name="time" class="form-control" required>
+        <option value="">-- Select Time --</option>
+        {% for slot in time_slots %}
+        <option value="{{ slot }}" {% if slot == request.form.time %}selected{% endif %}>{{ slot }}</option>
+        {% endfor %}
+    </select>
+</div>
 
+                <!-- Reason -->
                 <div class="form-group">
                     <label for="reason">Reason for Visit</label>
-                    <textarea class="form-control" id="reason" name="reason" rows="3" 
-                              placeholder="Briefly describe the reason for your visit"></textarea>
+                    <textarea class="form-control" id="reason" name="reason" rows="3"
+                              placeholder="Briefly describe the reason for your visit">{{ reason }}</textarea>
                 </div>
 
+                <!-- Terms -->
                 <div class="form-group">
                     <div class="custom-control custom-checkbox">
                         <input type="checkbox" class="custom-control-input" id="terms" required>
@@ -82,43 +89,12 @@
                     </div>
                 </div>
 
+                <!-- Submit -->
                 <button type="submit" class="btn btn-primary">
                     <i class="fas fa-calendar-check mr-2"></i>Book Appointment
                 </button>
             </form>
         </div>
     </div>
-
-    <!-- Doctor Availability -->
-    <div class="card shadow mb-4">
-        <div class="card-header py-3">
-            <h6 class="m-0 font-weight-bold text-primary">Doctor Availability</h6>
-        </div>
-        <div class="card-body">
-            <div id="availabilityCalendar"></div>
-        </div>
-    </div>
 </div>
-{% endblock %}
-
-{% block scripts %}
-<script>
-$(document).ready(function() {
-    // Filter doctors by department
-    $('#department').change(function() {
-        var departmentId = $(this).val();
-        $('#doctor_id option').show();
-        if (departmentId) {
-            $('#doctor_id option').not('[data-department="' + departmentId + '"], [value=""]').hide();
-        }
-        $('#doctor_id').val('');
-    });
-
-    // Date picker restrictions
-    $('#date').change(function() {
-        // In a real app, you would fetch available time slots from the server
-        console.log("Date selected: " + $(this).val());
-    });
-});
-</script>
 {% endblock %}

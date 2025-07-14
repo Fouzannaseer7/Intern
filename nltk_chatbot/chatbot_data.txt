@@ -1,0 +1,5 @@
+hello: Hi there! How can I help you today?
+how are you: I'm just a bunch of code, but I'm doing fine!
+tell me a joke: Why do programmers prefer dark mode? Because light attracts bugs.
+what is your name: I'm your friendly chatbot.
+bye: Goodbye! Take care.
