@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+{% block title %}Appointment Details | MediCare{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-lg rounded-4">
+                <div class="card-header bg-primary text-white rounded-top-4">
+                    <h4 class="mb-0 d-flex align-items-center gap-2">
+                        <i class="bi bi-calendar-check"></i> Appointment Details
+                    </h4>
+                </div>
+                <div class="card-body p-5">
+
+                    <!-- Appointment Info -->
+                    <div class="row g-5 mb-5">
+                        <!-- Doctor Info -->
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-shrink-0">
+                                    <div class="bg-primary bg-opacity-10 rounded-circle p-3">
+                                        <i class="bi bi-person-circle text-primary fs-1"></i>
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1 ms-4">
+                                    <small class="text-muted fw-semibold">Doctor</small>
+                                    <h5 class="mb-1 fw-bold text-dark">{{ appointment.doctor_name }}</h5>
+                                    <p class="mb-0 text-success fw-medium">
+                                        {{ appointment.specialization }} 
+                                        {% if appointment.department_name %}
+                                        • {{ appointment.department_name }}
+                                        {% endif %}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Date & Time -->
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-shrink-0">
+                                    <div class="bg-primary bg-opacity-10 rounded-circle p-3">
+                                        <i class="bi bi-calendar3 text-primary fs-1"></i>
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1 ms-4">
+                                    <small class="text-muted fw-semibold">Date & Time</small>
+                                    <h5 class="mb-1 fw-bold text-dark">
+                                        {{ appointment.appointment_date }}
+                                    </h5>
+                                    <p class="mb-0 text-primary fw-bold fs-5">
+                                        @ 
+                                        {% if appointment.start_time %}
+                                            {% if appointment.start_time is string %}
+                                                {{ appointment.start_time[:5] }}
+                                            {% else %}
+                                                {{ appointment.start_time.strftime('%I:%M %p') }}
+                                            {% endif %}
+                                        {% else %}
+                                            Time not set
+                                        {% endif %}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="my-5">
+
+                    <!-- Status & Reason -->
+                    <div class="row g-5 mb-5">
+                        <div class="col-md-6">
+                            <small class="text-muted fw-semibold">Appointment Status</small>
+                            <div class="mt-2">
+                                <span class="badge px-4 py-2 fs-6
+                                    {% if appointment.status == 'Confirmed' %}bg-success
+                                    {% elif appointment.status == 'Pending' %}bg-warning text-dark
+                                    {% elif appointment.status == 'Completed' %}bg-info text-white
+                                    {% elif appointment.status == 'Cancelled' %}bg-danger
+                                    {% else %}bg-secondary{% endif %}">
+                                    {{ appointment.status }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <small class="text-muted fw-semibold">Reason for Visit</small>
+                            <p class="mt-2 text-dark fw-medium bg-light p-3 rounded-3 border-start border-primary border-4">
+                                {{ appointment.reason or 'Not specified' }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Prescription Section -->
+                    {% if prescription %}
+                    <div class="mt-5 p-5 bg-gradient bg-light rounded-4 border shadow-sm">
+                        <h5 class="text-success mb-4 d-flex align-items-center gap-2">
+                            <i class="bi bi-file-medical fs-3"></i> Prescription
+                        </h5>
+                        <div class="bg-white p-4 rounded-3 border">
+                            <p class="mb-3">
+                                <strong>Prescribed on:</strong> 
+                                <span class="text-primary">
+                                    {{ prescription.prescribed_at.strftime('%B %d, %Y at %I:%M %p') }}
+                                </span>
+                            </p>
+                            <div class="prescription-text bg-light p-4 rounded border-start border-success border-5">
+                                <pre class="mb-0 text-dark fs-6 lh-lg">{{ prescription.prescription_text }}</pre>
+                            </div>
+
+                            {% if prescription.medicine_list %}
+                            <div class="mt-4">
+                                <h6 class="text-primary fw-bold">Medicines Prescribed:</h6>
+                                <ul class="list-group list-group-flush">
+                                    {% for med in prescription.medicine_list.split('|') %}
+                                        {% if med.strip() %}
+                                        <li class="list-group-item d-flex align-items-center py-3 border-bottom">
+                                            <i class="bi bi-capsule text-success me-3"></i>
+                                            <span class="fw-medium">{{ med.strip() }}</span>
+                                        </li>
+                                        {% endif %}
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info border-0 shadow-sm mt-5">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        <strong>No prescription yet.</strong>
+                        {% if appointment.status == 'Completed' %}
+                            The doctor will add it soon.
+                        {% else %}
+                            It will be available after your consultation.
+                        {% endif %}
+                    </div>
+                    {% endif %}
+
+                    <!-- Action Buttons -->
+                    <div class="mt-5 text-center d-flex gap-3 justify-content-center flex-wrap">
+                        <a href="{{ url_for('user_dashboard') }}" class="btn btn-lg btn-outline-primary px-5">
+                            <i class="bi bi-arrow-left-circle"></i> Back to Dashboard
+                        </a>
+                        
+                        {% if appointment.status in ['Pending', 'Confirmed'] and appointment.appointment_date >= today %}
+                        <a href="{{ url_for('cancel_appointment', appointment_id=appointment.appointment_id) }}" 
+                           class="btn btn-lg btn-outline-danger px-5"
+                           onclick="return confirm('Are you sure you want to cancel this appointment?')">
+                            <i class="bi bi-x-circle"></i> Cancel Appointment
+                        </a>
+                        {% endif %}
+
+                        {% if prescription %}
+                        <button onclick="window.print()" class="btn btn-lg btn-success px-5">
+                            <i class="bi bi-printer"></i> Print Prescription
+                        </button>
+                        {% endif %}
+                    </div>
+
+                    <!-- Print-friendly note -->
+                    <div class="text-center mt-4 text-muted small">
+                        <em>Appointment ID: #{{ appointment.appointment_id }}</em>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Print Styles -->
+<style>
+@media print {
+    body { background: white; }
+    .card { box-shadow: none; border: 1px solid #000; }
+    .no-print { display: none; }
+    .btn { display: none; }
+    .card-header { background: #007bff !important; color: white !important; }
+}
+</style>
+{% endblock %}

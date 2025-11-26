@@ -1,71 +1,226 @@
 {% extends "base.html" %}
+{% block title %}Doctor Dashboard | MediCare{% endblock %}
 
-{% block title %}Doctor Dashboard{% endblock %}
-{% block header %}Doctor Dashboard{% endblock %}
+{% block extra_css %}
+<style>
+    :root {
+        --primary: #2c7be5;
+        --success: #00d97e;
+        --warning: #ffb800;
+        --danger: #e63757;
+        --info: #39afd1;
+        --dark: #343a40;
+        --light: #f8f9fa;
+    }
+    .card-hover:hover { transform: translateY(-5px); box-shadow: 0 15px 35px rgba(0,0,0,0.1)!important; transition: all 0.3s; }
+    .status-badge { font-size: 0.8rem; padding: 0.4em 0.8em; }
+    .today-highlight { background: linear-gradient(120deg, #e3f2fd, #bbdefb); }
+    .print-only { display: none; }
+    @media print {
+        .no-print { display: none!important; }
+        .print-only { display: block!important; }
+        body { background: white; }
+        .card { box-shadow: none; border: 1px solid #ddd; }
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-md-6 mb-4">
-        <div class="card text-white bg-primary dashboard-card">
-            <div class="card-body">
-                <h5 class="card-title">Today's Appointments</h5>
-                <p class="card-text display-6">{{ today_appointments }}</p>
-                <a href="{{ url_for('appointments') }}" class="text-white">View Appointments</a>
-            </div>
+<div class="container-fluid py-5">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4 no-print">
+        <div>
+            <h1 class="text-success fw-bold mb-1">
+                <i class="bi bi-heart-pulse"></i> Doctor Dashboard
+            </h1>
+            <p class="text-muted mb-0">
+                Welcome back, <strong class="text-primary">{{ doctor.doctor_name }}</strong> 
+                <span class="text-info">— {{ doctor.specialization }}</span>
+            </p>
+        </div>
+        <div class="btn-group">
+            <button onclick="window.print()" class="btn btn-outline-secondary">
+                <i class="bi bi-printer"></i> Print Today
+            </button>
+            <a href="{{ url_for('logout') }}" class="btn btn-danger">
+                <i class="bi bi-box-arrow-right"></i> Logout
+            </a>
         </div>
     </div>
-    <div class="col-md-6 mb-4">
-        <div class="card text-white bg-success dashboard-card">
-            <div class="card-body">
-                <h5 class="card-title">Total Patients</h5>
-                <p class="card-text display-6">{{ total_patients }}</p>
-                <a href="{{ url_for('patients') }}" class="text-white">View Patients</a>
-            </div>
-        </div>
-    </div>
-</div>
 
-<div class="row mt-4">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header">
-                <h5>Today's Schedule</h5>
+    <!-- Today's Summary Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3 col-6">
+            <div class="card bg-primary text-white shadow card-hover">
+                <div class="card-body text-center">
+                    <h2 class="mb-0">{{ today_appointments|length }}</h2>
+                    <p class="mb-0">Today's Patients</p>
+                </div>
             </div>
-            <div class="card-body">
-                <table class="table table-hover">
-                    <thead>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="card bg-success text-white shadow card-hover">
+                <div class="card-body text-center">
+                    <h2 class="mb-0">{{ today_appointments|selectattr("status", "equalto", "Completed")|list|length }}</h2>
+                    <p class="mb-0">Completed</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="card bg-warning text-dark shadow card-hover">
+                <div class="card-body text-center">
+                    <h2 class="mb-0">{{ today_appointments|selectattr("status", "equalto", "Pending")|list|length }}</h2>
+                    <p class="mb-0">Pending</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="card bg-info text-white shadow card-hover">
+                <div class="card-body text-center">
+                    <h2 class="mb-0">{{ upcoming_appointments|length }}</h2>
+                    <p class="mb-0">Upcoming</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Today's Appointments -->
+    <div class="card shadow-lg mb-5 today-highlight">
+        <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">
+                <i class="bi bi-calendar-check"></i> Today's Appointments 
+                <small class="ms-2">({{ today.strftime('%A, %B %d, %Y') }})</small>
+            </h4>
+            <span class="badge bg-light text-dark fs-6">{{ today_appointments|length }} patient{{ 's' if today_appointments|length != 1 else '' }}</span>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 align-middle">
+                    <thead class="table-light">
                         <tr>
-                            <th>Time</th>
+                            <th width="12%">Time</th>
                             <th>Patient</th>
+                            <th>Phone</th>
                             <th>Reason</th>
-                            <th>Status</th>
-                            <th>Actions</th>
+                            <th width="15%">Status</th>
+                            <th width="15%" class="no-print">Action</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <!-- Sample data -->
+                        {% if today_appointments %}
+                            {% for a in today_appointments %}
+                            <tr {% if a.status == 'Pending' %}class="table-warning fw-bold"{% endif %}>
+                                <td>
+                                    <strong class="text-primary">{{ a.start_time | safe_time }}</strong>
+                                </td>
+                                <td>
+                                    <div>{{ a.patient_name }}</div>
+                                    {% if a.age %}<small class="text-muted">{{ a.age }} years</small>{% endif %}
+                                </td>
+                                <td>
+                                    <a href="tel:{{ a.phone }}" class="text-decoration-none">
+                                        {{ a.phone or '—' }}
+                                    </a>
+                                </td>
+                                <td>{{ a.reason }}</td>
+                                <td>
+                                    <span class="badge status-badge rounded-pill
+                                        {% if a.status == 'Completed' %}bg-success
+                                        {% elif a.status == 'Confirmed' %}bg-primary
+                                        {% elif a.status == 'Pending' %}bg-warning text-dark
+                                        {% else %}bg-secondary{% endif %}">
+                                        {{ a.status }}
+                                    </span>
+                                </td>
+                                <td class="no-print">
+                                    {% if a.status != 'Completed' %}
+                                    <a href="{{ url_for('doctor_complete', id=a.appointment_id) }}" 
+                                       class="btn btn-sm btn-success">
+                                        <i class="bi bi-check-circle"></i> Complete
+                                    </a>
+                                    {% else %}
+                                    <span class="text-success fw-bold">
+                                        <i class="bi bi-check2-all"></i> Done
+                                    </span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
                         <tr>
-                            <td>10:00 AM</td>
-                            <td>John Doe</td>
-                            <td>Follow-up</td>
-                            <td><span class="badge bg-success">Scheduled</span></td>
-                            <td>
-                                <a href="#" class="btn btn-sm btn-outline-primary">View</a>
+                            <td colspan="6" class="text-center py-5 text-muted">
+                                <i class="bi bi-emoji-smile fs-1"></i><br>
+                                <strong>No appointments today</strong><br>
+                                <small>Enjoy your day off!</small>
                             </td>
                         </tr>
-                        <tr>
-                            <td>11:30 AM</td>
-                            <td>Jane Smith</td>
-                            <td>Consultation</td>
-                            <td><span class="badge bg-success">Scheduled</span></td>
-                            <td>
-                                <a href="#" class="btn btn-sm btn-outline-primary">View</a>
-                            </td>
-                        </tr>
+                        {% endif %}
                     </tbody>
                 </table>
             </div>
         </div>
     </div>
+
+    <!-- Upcoming Appointments -->
+    <div class="card shadow-lg">
+        <div class="card-header bg-info text-white">
+            <h4 class="mb-0">
+                <i class="bi bi-calendar-week"></i> Upcoming Appointments
+            </h4>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Date</th>
+                            <th>Time</th>
+                            <th>Patient</th>
+                            <th>Reason</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if upcoming_appointments %}
+                            {% for a in upcoming_appointments %}
+                            <tr>
+                                <td>
+                                    <strong>{{ a.appointment_date.strftime('%a, %b %d') }}</strong>
+                                </td>
+                                <td>{{ a.start_time | safe_time }}</td>
+                                <td>{{ a.patient_name }}</td>
+                                <td>{{ a.reason[:35] }}{% if a.reason|length > 35 %}...{% endif %}</td>
+                                <td>
+                                    <span class="badge bg-primary status-badge">{{ a.status }}</span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                        <tr>
+                            <td colspan="5" class="text-center text-muted py-4">
+                                No upcoming appointments in next 10 days
+                            </td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Print Header (visible only when printing) -->
+    <div class="print-only text-center my-5">
+        <h2>MEDICARE HOSPITAL</h2>
+        <p><strong>Dr. {{ doctor.doctor_name }}</strong> — {{ doctor.specialization }}</p>
+        <p>Today's Appointments — {{ today.strftime('%d %B %Y') }}</p>
+        <hr>
+    </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Auto-refresh every 5 minutes
+    setTimeout(() => location.reload(), 5 * 60 * 1000);
+</script>
 {% endblock %}

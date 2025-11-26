@@ -1,78 +1,154 @@
 {% extends "base.html" %}
+{% block title %}Admin Dashboard | MediCare{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <h2 class="my-4"><i class="bi bi-speedometer2"></i> Admin Dashboard</h2>
-    
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <div class="alert alert-{{ category }} alert-dismissible fade show">
-                    {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
+<div class="container-fluid py-5">
+    <h1 class="text-primary fw-bold mb-4">
+        <i class="bi bi-shield-lock-fill"></i> Admin Control Center
+    </h1>
 
-    <div class="row">
-        <!-- Appointments Section -->
-        <div class="col-md-12">
-            <div class="card shadow mb-4">
-                <div class="card-header py-3 d-flex justify-content-between align-items-center">
-                    <h6 class="m-0 font-weight-bold text-primary">
-                        <i class="bi bi-calendar-check"></i> All Appointments
-                    </h6>
+    <!-- Stats -->
+    <div class="row g-4 mb-5">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body text-center">
+                    <h2>{{ total_patients }}</h2>
+                    <p>Total Patients</p>
                 </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
-                            <thead>
-                                <tr>
-                                    <th>Patient</th>
-                                    <th>Doctor</th>
-                                    <th>Date</th>
-                                    <th>Time</th>
-                                    <th>Status</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for appt in appointments %}
-                                <tr>
-                                    <td>{{ appt.full_name }} ({{ appt.username }})</td>
-                                    <td>Dr. {{ appt.doctor_name }}</td>
-                                    <td>{{ appt.appointment_date }}</td>
-                                    <td>{{ appt.appointment_time }}</td>
-                                    <td>
-                                        <span class="badge 
-                                            {% if appt.status == 'Confirmed' %}bg-success
-                                            {% elif appt.status == 'Pending' %}bg-warning text-dark
-                                            {% elif appt.status == 'Cancelled' %}bg-secondary
-                                            {% else %}bg-info{% endif %}">
-                                            {{ appt.status }}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <div class="btn-group">
-                                            <form action="{{ url_for('update_appointment_status') }}" method="POST">
-                                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                                <input type="hidden" name="appointment_id" value="{{ appt.appointment_id }}">
-                                                <select name="status" class="form-select form-select-sm" 
-                                                    onchange="this.form.submit()">
-                                                    <option value="Pending" {% if appt.status=='Pending' %}selected{% endif %}>Pending</option>
-                                                    <option value="Confirmed" {% if appt.status=='Confirmed' %}selected{% endif %}>Confirm</option>
-                                                    <option value="Cancelled" {% if appt.status=='Cancelled' %}selected{% endif %}>Cancel</option>
-                                                </select>
-                                            </form>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body text-center">
+                    <h2>{{ total_doctors }}</h2>
+                    <p>Total Doctors</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body text-center">
+                    <h2>{{ total_appointments }}</h2>
+                    <p>Total Appointments</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-dark">
+                <div class="card-body text-center">
+                    <h2>{{ pending_appointments }}</h2>
+                    <p>Pending</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FULL CONTROL TABLE -->
+    <div class="card shadow-lg">
+        <div class="card-header bg-dark text-white">
+            <h4 class="mb-0">All Appointments — Full Admin Control</h4>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>ID</th>
+                            <th>Patient</th>
+                            <th>Doctor</th>
+                            <th>Date</th>
+                            <th>Time</th>
+                            <th>Reason</th>
+                            <th>Status</th>
+                            <th class="text-center">ADMIN ACTIONS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for a in recent_appointments %}
+                        <tr {% if a.status == 'Pending' %}class="table-warning"{% endif %}>
+                            <td><small>#{{ a.appointment_id }}</small></td>
+                            <td><strong>{{ a.patient_name }}</strong></td>
+                            <td>{{ a.doctor_name }}</td>
+                            <td>{{ a.appointment_date }}</td>
+                            <td>{{ a.start_time | safe_time }}</td>
+                            <td>{{ a.reason[:25] }}{% if a.reason|length > 25 %}...{% endif %}</td>
+                            <td>
+                                <span class="badge px-3 py-2
+                                    {% if a.status == 'Confirmed' %}bg-success
+                                    {% elif a.status == 'Pending' %}bg-warning text-dark
+                                    {% elif a.status == 'Cancelled' %}bg-secondary
+                                    {% else %}bg-danger{% endif %}">
+                                    {{ a.status }}
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <!-- APPROVE -->
+                                {% if a.status == 'Pending' %}
+                                <a href="{{ url_for('admin_approve', id=a.appointment_id) }}" 
+                                   class="btn btn-sm btn-success" title="Approve">
+                                    Approve
+                                </a>
+                                {% endif %}
+
+                                <!-- REJECT -->
+                                {% if a.status != 'Cancelled' %}
+                                <a href="{{ url_for('admin_cancel', id=a.appointment_id) }}" 
+                                   class="btn btn-sm btn-danger" title="Reject/Cancel"
+                                   onclick="return confirm('Cancel this appointment?')">
+                                    Cancel
+                                </a>
+                                {% endif %}
+
+                                <!-- RESCHEDULE -->
+                                <button type="button" class="btn btn-sm btn-warning" data-bs-toggle="modal" 
+                                        data-bs-target="#reschedule{{ a.appointment_id }}">
+                                    Reschedule
+                                </button>
+
+                                <!-- DELETE -->
+                                <a href="{{ url_for('admin_delete', id=a.appointment_id) }}" 
+                                   class="btn btn-sm btn-dark" title="Delete Forever"
+                                   onclick="return confirm('DELETE FOREVER? Cannot undo!')">
+                                    Delete
+                                </a>
+                            </td>
+                        </tr>
+
+                        <!-- RESCHEDULE MODAL -->
+                        <div class="modal fade" id="reschedule{{ a.appointment_id }}">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <form action="{{ url_for('admin_reschedule', id=a.appointment_id) }}" method="POST">
+                                        <div class="modal-header">
+                                            <h5>Reschedule Appointment #{{ a.appointment_id }}</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                         </div>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+                                        <div class="modal-body">
+                                            <div class="mb-3">
+                                                <label>New Date</label>
+                                                <input type="date" name="new_date" class="form-control" 
+                                                       value="{{ a.appointment_date }}" required>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label>New Time</label>
+                                                <input type="time" name="new_time" class="form-control" 
+                                                       value="{{ a.start_time | safe_time }}" required>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label>New Reason (optional)</label>
+                                                <textarea name="new_reason" class="form-control" rows="2">{{ a.reason }}</textarea>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>

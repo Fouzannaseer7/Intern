@@ -1,140 +1,166 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>User Dashboard - Hospital Appointment System</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-</head>
-<body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-        <div class="container">
-            <a class="navbar-brand" href="/">Hospital App</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
-                    <li class="nav-item">
-                        <a class="nav-link active" href="/user/dashboard">Dashboard</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/user/dashboard#book-appointment">Book Appointment</a>
-                    </li>
-                </ul>
-                <ul class="navbar-nav">
-                    <li class="nav-item">
-                        <span class="nav-link">Welcome, {{ username }}</span>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/logout">Logout</a>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </nav>
+{% extends "base.html" %}
 
-    <div class="container mt-4">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ category }}">{{ message }}</div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
+{% block title %}My Appointments | MediCare{% endblock %}
 
-        <h2>Your Appointments</h2>
-        {% if appointments %}
-            <div class="table-responsive">
-                <table class="table table-striped table-hover">
-                    <thead>
-                        <tr>
-                            <th>Doctor</th>
-                            <th>Specialization</th>
-                            <th>Date</th>
-                            <th>Time</th>
-                            <th>Reason</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for appointment in appointments %}
-                        <tr>
-                            <td>{{ appointment.doctor_name }}</td>
-                            <td>{{ appointment.specialization }}</td>
-                            <td>{{ appointment.appointment_date }}</td>
-                            <td>{{ appointment.appointment_time }}</td>
-                            <td>{{ appointment.reason }}</td>
-                            <td>
-                                {% if appointment.status == 'Pending' %}
-                                    <span class="badge bg-warning text-dark">Pending</span>
-                                {% elif appointment.status == 'Confirmed' %}
-                                    <span class="badge bg-success">Confirmed</span>
-                                {% elif appointment.status == 'Cancelled' %}
-                                    <span class="badge bg-secondary">Cancelled</span>
-                                {% else %}
-                                    <span class="badge bg-primary">Completed</span>
-                                {% endif %}
-                            </td>
-                            <td>
-                                {% if appointment.status == 'Pending' and appointment.appointment_date >= today %}
-                                    <a href="/cancel-appointment/{{ appointment.appointment_id }}" class="btn btn-sm btn-danger">Cancel</a>
-                                {% endif %}
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        {% else %}
-            <div class="alert alert-info">You don't have any appointments yet.</div>
-        {% endif %}
+{% block content %}
+<div class="container-fluid py-4">
 
-        <hr id="book-appointment">
-
-        <h2 class="mt-5">Book New Appointment</h2>
-        <div class="card shadow">
-            <div class="card-body">
-                <form action="/book-appointment" method="POST">
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="doctor" class="form-label">Select Doctor</label>
-                            <select class="form-select" id="doctor" name="doctor" required>
-                                <option value="">Select Doctor</option>
-                                {% for doctor in doctors %}
-                                    <option value="{{ doctor.doctor_id }}">{{ doctor.name }} - {{ doctor.specialization }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div class="col-md-3 mb-3">
-                            <label for="appointment_date" class="form-label">Date</label>
-                            <input type="date" class="form-control" id="appointment_date" name="appointment_date" min="{{ today }}" required>
-                        </div>
-                        <div class="col-md-3 mb-3">
-                            <label for="appointment_time" class="form-label">Time</label>
-                            <input type="time" class="form-control" id="appointment_time" name="appointment_time" required>
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <label for="reason" class="form-label">Reason for Appointment</label>
-                        <textarea class="form-control" id="reason" name="reason" rows="3" required></textarea>
-                    </div>
-                    <div class="d-grid">
-                        <button type="submit" class="btn btn-primary">Book Appointment</button>
-                    </div>
-                </form>
-            </div>
-        </div>
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="fw-bold mb-0 text-primary">My Appointments</h3>
+    <div>
+      <span class="text-muted me-3">Welcome, <strong>{{ session.full_name or session.username }}</strong></span>
+      <a href="{{ url_for('logout') }}" class="btn btn-outline-danger btn-sm">Logout</a>
     </div>
+  </div>
 
-    <footer class="bg-dark text-white text-center py-3 mt-5">
-        <div class="container">
-            <p>&copy; 2023 Hospital Appointment System. All rights reserved.</p>
+  <!-- Appointments List -->
+  {% if appointments %}
+  <div class="card border-0 shadow-sm mb-5">
+    <div class="card-header bg-light fw-semibold text-primary">Your Appointments</div>
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>Doctor</th>
+              <th>Specialization</th>
+              <th>Date</th>
+              <th>Time</th>
+              <th>Reason</th>
+              <th>Status</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for appointment in appointments %}
+            <tr>
+              <td>
+                  <strong class="text-primary">
+                      {{ appointment.doctor_name or 'Dr. Unknown' }}
+                  </strong>
+              </td>
+              <td>{{ appointment.specialization or '—' }}</td>
+              <td>{{ appointment.appointment_date }}</td>
+              <td>{{ appointment.start_time or appointment.appointment_time }}</td>
+              <td>{{ appointment.reason or '—' }}</td>
+              <td>
+                <span class="badge 
+                  {% if appointment.status == 'Pending' %}bg-warning text-dark
+                  {% elif appointment.status == 'Confirmed' %}bg-success
+                  {% elif appointment.status == 'Cancelled' %}bg-secondary
+                  {% else %}bg-primary{% endif %}">
+                  {{ appointment.status }}
+                </span>
+              </td>
+              <td class="text-end">
+                {% if appointment.status in ['Pending','Confirmed'] and appointment.appointment_date >= today %}
+                <a href="{{ url_for('cancel_appointment', appointment_id=appointment.appointment_id) }}" class="btn btn-sm btn-outline-danger">Cancel</a>
+                {% else %}
+                <a href="{{ url_for('view_appointment', appointment_id=appointment.appointment_id) }}" 
+                  class="btn btn-sm btn-outline-primary">
+                  <i class="bi bi-eye"></i> View
+                </a>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <div class="alert alert-info shadow-sm">
+    You don’t have any appointments yet. Book your first appointment below!
+  </div>
+  {% endif %}
+
+  <!-- Booking Form (NO JS) -->
+  <div class="card shadow-sm border-0 mt-4">
+    <div class="card-header bg-light text-primary fw-semibold">Book New Appointment</div>
+    <div class="card-body">
+
+      <!-- Step 1: Select Doctor & Date → Auto Submit to Load Times -->
+      <form method="GET" action="{{ url_for('user_dashboard') }}" id="load-times-form">
+        <div class="row g-3 align-items-end mb-4">
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Select Doctor</label>
+            <select name="doctor_id" class="form-select" onchange="this.form.submit()">
+              <option value="">Choose a doctor</option>
+              {% for doctor in doctors %}
+              <option value="{{ doctor.doctor_id }}" 
+                  {% if request.args.doctor_id == doctor.doctor_id|string %}selected{% endif %}>
+                  {{ doctor.display_name }} — {{ doctor.specialization or 'General' }}
+              </option>
+              {% endfor %} 
+            </select>
+          </div>
+
+          <div class="col-md-3">
+            <label class="form-label fw-semibold">Date</label>
+            <input type="date" name="appointment_date" class="form-control" min="{{ today }}" 
+                   value="{{ request.args.appointment_date }}" onchange="this.form.submit()" required>
+          </div>
+
+          <div class="col-md-3">
+            <button type="submit" class="btn btn-outline-primary w-100">Load Available Times</button>
+          </div>
         </div>
-    </footer>
+      </form>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+      <!-- Step 2: Show Available Times (Server-Rendered) -->
+      {% if selected_doctor and selected_date and available_slots is defined %}
+      <div class="alert alert-success">
+        Available times for <strong>{{ selected_doctor.display_name or 'Selected Doctor' }}</strong>
+      </div>
+
+      <form action="{{ url_for('book_appointment') }}" method="POST">
+        <input type="hidden" name="doctor_id" value="{{ selected_doctor.doctor_id }}">
+        <input type="hidden" name="appointment_date" value="{{ selected_date }}">
+
+        <div class="row g-3 mb-3">
+          <div class="col-md-4">
+            <label class="form-label fw-semibold">Choose Time</label>
+            <select name="start_time" class="form-select" required>
+              <option value="">Select time</option>
+              {% for slot in available_slots %}
+              <option value="{{ slot }}">{{ slot }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Reason for Visit</label>
+          <textarea name="reason" rows="3" class="form-control" placeholder="Brief description..." required></textarea>
+        </div>
+
+        <div class="d-grid">
+          <button type="submit" class="btn btn-primary">Confirm Booking</button>
+        </div>
+      </form>
+
+      {% elif request.args.doctor_id and request.args.appointment_date %}
+      <div class="alert alert-warning">
+        No available time slots for the selected doctor and date.
+      </div>
+      {% endif %}
+
+      <!-- Show selected doctor name -->
+      {% if selected_doctor %}
+      <div class="mt-4 p-3 bg-light border rounded">
+        <h6 class="text-primary mb-1">Selected Doctor</h6>
+        <p class="fw-bold text-dark mb-0">
+    <p class="fw-bold text-dark mb-0">
+        {{ selected_doctor.display_name or 'Dr. Not Found' }} 
+        — {{ selected_doctor.specialization or 'General' }}
+    </p>
+      </p>
+      </div>
+      {% endif %}
+
+    </div>
+  </div>
+</div>
+{% endblock %}

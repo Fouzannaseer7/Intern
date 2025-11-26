@@ -1,0 +1,56 @@
+/* Custom styles for user dashboard to improve visual appeal */
+/* Doctor card enhancements */
+.doctor-card {
+	border-radius: 12px;
+	overflow: hidden;
+	transition: transform .18s ease, box-shadow .18s ease;
+}
+.doctor-card:hover {
+	transform: translateY(-6px);
+	box-shadow: 0 10px 30px rgba(21, 34, 56, 0.12);
+}
+.doctor-card .card-body { padding: 1rem; }
+.doctor-photo { width:64px; height:64px; object-fit:cover; border-radius:50%; }
+
+/* Availability badge */
+.badge-availability {
+	background: linear-gradient(90deg,#e6f7ff,#f0f9ff);
+	color: #0b5394;
+	border: 1px solid rgba(11,83,148,0.06);
+	font-weight:600;
+}
+
+/* Quick book panel */
+.quick-book-panel { background: linear-gradient(180deg,#ffffff,#fbfbff); border-radius:8px; padding:1rem; }
+.quick-doctor-photo { width:48px; height:48px; object-fit:cover; border-radius:8px; }
+
+/* Modal tweaks */
+#doctorProfileModal .modal-content { border-radius:12px; }
+#doctorProfileModal .modal-body { padding-top:0.5rem; }
+
+/* Small utility */
+.muted-small { color:#6c757d; font-size:.92rem; }
+
+/* Followed bar */
+#followedBar { background: linear-gradient(90deg, #ffffff, #f8fbff); border-radius:12px; }
+#followed-thumbs a img { transition: transform .18s ease; }
+#followed-thumbs a:hover img { transform: translateY(-4px); }
+
+/* Follow button */
+.btn-follow { box-shadow: 0 3px 8px rgba(10,20,40,0.06); border-radius:8px; }
+.btn-follow.btn-primary { color: #fff; }
+
+/* Rating stars */
+.doctor-rating i { font-size: 0.95rem; margin-right: 2px; }
+
+/* Responsive tweaks for denser layouts */
+@media (max-width: 767px) {
+	.doctor-card .card-body { padding: .75rem; }
+	.doctor-photo { width:56px; height:56px; }
+}
+
+/* A subtle entrance animation for doctor cards */
+.doctor-card { opacity: 0; transform: translateY(8px); transition: transform .25s ease, opacity .25s ease; }
+.doctor-card.visible { opacity: 1; transform: translateY(0); }
+
+
